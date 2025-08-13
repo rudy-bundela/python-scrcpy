@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"  # Web UI
+      - "2000:2000"  # RTMP stream
+    environment:
+      - RTMP_SERVER_URL=rtmp://localhost:2000/live/stream
+      - MEDIAMTX_URL=rtmp://mediamtx:1935/live
+    networks:
+      - scrcpy_net
+    depends_on:
+      - mediamtx
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest-ffmpeg
+    ports:
+      - "8554:8554"  # RTSP
+      - "8888:8888"  # API
+      - "8889:8889"  # Metrics
+      - "8890:8890/udp"  # WebRTC
+      - "1935:1935"  # RTMP input
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml
+    networks:
+      - scrcpy_net
+    environment:
+      - MTX_PROTOCOLS=tcp, udp
+      - MTX_RTMPINPORT=1935
+      - MTX_WEBRTCINPORT=8890
+    restart: unless-stopped
+
+networks:
+  scrcpy_net:
+    driver: bridge

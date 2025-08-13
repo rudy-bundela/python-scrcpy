@@ -50,4 +50,4 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 COPY webui.py .
 
 EXPOSE 5000
-CMD ["/usr/local/bin/gunicorn", "--bind", "0.0.0.0:5000", "webui:app"]
+CMD ["python", "webui.py"]
