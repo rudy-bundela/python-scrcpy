@@ -171,7 +171,7 @@ def handle_command(data):
         return
 
     # List of allowed commands for security
-    allowed_commands = ['ls', 'pwd', 'date', 'whoami', 'uname', 'adb', 'scrcpy']
+    allowed_commands = ['ls', 'pwd', 'date', 'whoami', 'uname', 'adb', 'scrcpy', 'ffmpeg', 'cd']
     command_base = shlex.split(command)[0]
     
     if command_base not in allowed_commands:

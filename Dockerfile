@@ -21,7 +21,7 @@ RUN curl -L -o scrcpy-server https://github.com/Genymobile/scrcpy/releases/downl
     && echo "$SERVER_HASH  /scrcpy-server" | sha256sum -c -
 
 # Build scrcpy
-RUN git clone -b update-recorder.c https://github.com/buy-real-code-online/scrcpy-wip scrcpy \
+RUN git clone -b turn-off-listening https://github.com/buy-real-code-online/scrcpy-wip scrcpy \
     && cd scrcpy \
     && meson x --buildtype=release --strip -Db_lto=true -Dprebuilt_server=/scrcpy-server \
     && cd x \
@@ -33,9 +33,10 @@ FROM python:3-alpine
 
 # Install only runtime dependencies
 RUN apk add --no-cache \
+    ffmpeg \
     ffmpeg-dev \
-    libusb-dev \
-    sdl2-dev \
+    libusb \
+    sdl2 \
     android-tools
 
 # Copy only necessary files from builder
