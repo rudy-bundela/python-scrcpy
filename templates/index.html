@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>
+        Simple Web UI
+    </title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div x-data="{ pairing_information: { pairing_ip: '', pairing_port: '', pairing_code: '' }, success: false, async pairDevice() {
+        
+        if (!this.pairing_information.pairing_ip || !this.pairing_information.pairing_port || !this.pairing_information.pairing_code) {
+            alert('Please fill in all fields.');
+            return;
+        }
+        
+        const response = await fetch('/adb_pair', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(this.pairing_information)
+        });
+        const result = await response.json();
+        this.success = result.success === 'true';
+        console.log('Pairing result:', result);
+        console.log('Pairing successful:', this.success);
+    } }">
+        <br>
+            ADB Pairing Information
+        </br>
+        <input x-model="pairing_information.pairing_ip" type="text" placeholder="Enter ADB Pair IP" required="true" class="bg-white-900"/>
+        <input x-model="pairing_information.pairing_port" type="text" placeholder="Enter ADB Pair Port" required="true" class="bg-white-900"/>
+        <input x-model="pairing_information.pairing_code" type="text" placeholder="Enter ADB Pair Code" required="true" class="bg-white-900"/>
+        <button @click="pairDevice">Pair Phone</button>
+        <span x-show="success">Pairing successful!</span>
+    </div>
+</body>
+</html>
