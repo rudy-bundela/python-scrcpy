@@ -31,10 +31,14 @@ RUN git clone -b turn-off-listening https://github.com/buy-real-code-online/scrc
 # Final stage
 FROM python:3-alpine
 
+# Set up web application
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install gunicorn
+
 # Install only runtime dependencies
 RUN apk add --no-cache \
     ffmpeg \
-    ffmpeg-dev \
     libusb \
     sdl2 \
     android-tools
@@ -42,13 +46,10 @@ RUN apk add --no-cache \
 # Copy only necessary files from builder
 COPY --from=builder /usr/local/bin/scrcpy /usr/local/bin/
 COPY --from=builder /usr/local/share/scrcpy /usr/local/share/scrcpy
-
-# Set up web application
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install gunicorn
-
-COPY webui.py .
+COPY --from=builder /usr/local/bin/mediamtx /usr/local/bin/
+COPY ./templates ./templates
+COPY ./static ./static
+COPY simplewebui.py .
 
 EXPOSE 5000
-CMD ["python", "webui.py"]
+CMD ["python", "simplewebui.py"]

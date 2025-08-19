@@ -1,17 +1,14 @@
 services:
   web:
+    image: python-scrcpy:latest
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "5000:5000"  # Web UI
-      - "2001:2000"  # RTMP stream
+      - "8000:8000"
     volumes:
       - scrcpy_adb_keys:/root/.android
-    environment:
-      - RTMP_SERVER_URL=rtmp://mediamtx:1935/live/stream 
-      - MEDIAMTX_URL=rtmp://mediamtx:1935/live
-      - ADB_VENDOR_KEYS=/root/.android
     networks:
       - scrcpy_net
     depends_on:
@@ -23,17 +20,13 @@ services:
       - "8554:8554"  # RTSP
       - "8888:8888"  # API
       - "8889:8889"  # Metrics
+      - "8189:8189/udp"
       - "8890:8890/udp"  # WebRTC
-      - "2000:1935"  # RTMP input
       - "19302:19302" # Stun Webrtc
     volumes:
       - ./mediamtx.yml:/mediamtx.yml
     networks:
       - scrcpy_net
-    # environment:
-    #   - MTX_PROTOCOLS=tcp, udp
-    #   - MTX_RTMPINPORT=1935
-    #   - MTX_WEBRTCINPORT=8890
     restart: unless-stopped
 
 networks:
