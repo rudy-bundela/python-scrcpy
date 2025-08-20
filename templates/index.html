@@ -9,117 +9,8 @@
     <link href="/static/output.css" rel="stylesheet">
 </head>
 
-<body class="m-auto p-5 bg-gray-400 text-red-900 ">
-    <div class="bg-amber-100" x-data="{ main_information: ''}">
-        <div x-data="{ pairing_information: { pairing_ip: '', pairing_port: '', pairing_code: '' }, success: false, async pairDevice() {
-            
-            if (!this.pairing_information.pairing_ip || !this.pairing_information.pairing_port || !this.pairing_information.pairing_code) {
-                alert('Please fill in all fields.');
-                return;
-            }
-            
-            const response = await fetch('/adb_pair', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(this.pairing_information)
-            });
-            const result = await response.json();
-            this.success = result.success === 'true';
-            console.log('Pairing result:', result);
-            console.log('Pairing successful:', this.success);
-        } }">
-            <br>
-            ADB Pairing Information
-            </br>
-            <input x-model="pairing_information.pairing_ip" type="text" placeholder="Enter ADB Pair IP" required="true"
-                class="bg-white-900" />
-            <input x-model="pairing_information.pairing_port" type="text" placeholder="Enter ADB Pair Port"
-                required="true" class="bg-white-900" />
-            <input x-model="pairing_information.pairing_code" type="text" placeholder="Enter ADB Pair Code"
-                required="true" class="bg-white-900" />
-            <button class="m-auto p-2 border-2 border-red-400 bg-red-100 rounded-3xl" @click="pairDevice">Pair
-                Phone</button>
-            <span x-show="success">Pairing successful!</span>
-        </div>
-        <div x-data="{ connection_information: { connection_ip: '', connection_port: ''}, success: false, async connectDevice() {
-
-            if (!this.connection_information.connection_ip || !this.connection_information.connection_port) {
-                alert('Please fill in all fields.');
-                return;
-            }
-
-            const response = await fetch('/adb_connect', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(this.connection_information)
-            });
-            const result = await response.json();
-            this.success = result.success === 'true';
-            console.log('Connection result:', result);
-            console.log('Connection successful:', this.success);
-        } }">
-            <br>
-            ADB Connection Information
-            </br>
-            <input x-model="connection_information.connection_ip" type="text" placeholder="Enter ADB Connection IP"
-                required="true" class="bg-white-900" />
-            <input x-model="connection_information.connection_port" type="text" placeholder="Enter ADB Connection Port"
-                required="true" class="bg-white-900" />
-            <button @click="connectDevice">Connect Phone</button>
-            <span x-show="success">Connection successful!</span>
-        </div>
-        <div x-data="{ scrcpy_start: { video_codec: '', video_source: '', camera_id: '', bitrate: '', camera_size: '', camera_fps: '' }, success: false, async start_scrcpy_server() {
-
-            if (!this.scrcpy_start.video_codec || !this.scrcpy_start.video_source || !this.scrcpy_start.camera_id || !this.scrcpy_start.bitrate || !this.scrcpy_start.camera_size || !this.scrcpy_start.camera_fps) {
-                alert('Using defaults');
-            }
-
-            const response = await fetch('/scrcpy_start', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(this.scrcpy_start)
-            });
-            const result = await response.json();
-            this.success = result.success === 'true';
-            console.log('Connection result:', result);
-            console.log('Connection successful:', this.success);
-        } }">
-            <br>Start Scrcpy Stream</br>
-            <input x-model="scrcpy_start.video_codec" type="text" placeholder="Enter Video Codec" required="true"
-                class="bg-white-900" />
-            <input x-model="scrcpy_start.video_source" type="text" placeholder="Enter Video Source" required="true"
-                class="bg-white-900" />
-            <input x-model="scrcpy_start.camera_id" type="text" placeholder="Enter Camera ID" required="true"
-                class="bg-white-900" />
-            <input x-model="scrcpy_start.bitrate" type="text" placeholder="Enter Bitrate" required="true"
-                class="bg-white-900" />
-            <input x-model="scrcpy_start.camera_size" type="text" placeholder="Enter Camera Size" required="true"
-                class="bg-white-900" />
-            <input x-model="scrcpy_start.camera_fps" type="text" placeholder="Enter Camera FPS" required="true"
-                class="bg-white-900" />
-            <button @click="start_scrcpy_server">Start Scrcpy Server</button>
-            <span x-show="success">
-                Scrcpy server started successfully!
-            </span>
-        </div>
-        <div x-data="{ async stop_scrcpy_server() {
-            const response = await fetch('/scrcpy_stop', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            const result = await response.json();
-            console.log('Stop Scrcpy Server result:', result);
-        } }">
-            <button class="bg-red-500 text-white" @click="stop_scrcpy_server">Stop Scrcpy Server</button>
-        </div>
+<body>
+    <div>
         <div x-data="adbConnection()" class="min-h-screen transition-colors duration-300"
             :class="darkMode ? 'dark bg-gray-900' : 'bg-gradient-to-br from-slate-50 to-blue-50'">
             <!-- Dark Mode Toggle -->
@@ -145,19 +36,16 @@
                     <!-- Header -->
                     <div class="text-center mb-8">
                         <div class="flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 mr-3" :class="darkMode ? 'text-blue-400' : 'text-blue-600'" fill="none"
+                            <!-- <svg class="w-8 h-8 mr-3" :class="darkMode ? 'text-blue-400' : 'text-blue-600'" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z">
                                 </path>
-                            </svg>
-                            <h1 class="text-3xl font-bold" :class="darkMode ? 'text-white' : 'text-gray-900'">ADB Device
-                                Connection</h1>
+                            </svg> -->
+                            <h1 class="text-3xl font-bold" :class="darkMode ? 'text-white' : 'text-gray-900'">
+                                Camera2Browser</h1>
                         </div>
-                        <p class="max-w-2xl mx-auto" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">
-                            Connect your Android device to the server using ADB for remote control and streaming.
-                            Follow the steps below to establish a secure connection.
-                        </p>
+                        <p class="max-w-2xl mx-auto" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Use your Android phone as a camera!</p>
                     </div>
 
                     <!-- Connection Status Bar -->
@@ -441,7 +329,7 @@
                             :class="darkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50'">
                             <h3 class="text-lg font-semibold mb-3"
                                 :class="darkMode ? 'text-blue-300' : 'text-blue-900'">Setup Instructions</h3>
-                            <div class="space-y-2 text-sm" :class="darkMode ? 'text-blue-200' : 'text-blue-800'">
+                            <div class="space-y-2 text-sm" :class="darkMode ?'text-blue-200' : 'text-blue-800'">
                                 <p>1. <strong>Enable Developer Options:</strong> Go to Settings → About phone → Tap
                                     "Build number" 7 times</p>
                                 <p>2. <strong>Enable USB Debugging:</strong> Go to Settings → Developer options → Enable
@@ -537,14 +425,42 @@
                         <div>
                             <label class="block text-sm font-medium mb-2"
                                 :class="darkMode ? 'text-gray-200' : 'text-gray-700'">
+                                Camera
+                            </label>
+                            <select x-model="selectedCamera" @change="onCameraChange"
+                                class="w-full px-3 py-2 border rounded-md transition-colors duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'">
+                                <template x-for="(cam, idx) in cameraOptions" :key="idx">
+                                    <option :value="cam" x-text="'Camera ' + cam"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2"
+                                :class="darkMode ? 'text-gray-200' : 'text-gray-700'">
                                 Resolution
                             </label>
                             <select x-model="streamingData.resolution"
                                 class="w-full px-3 py-2 border rounded-md transition-colors duration-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                 :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'">
-                                <option value="1920x1080">1920x1080 (Full HD)</option>
-                                <option value="1280x720">1280x720 (HD)</option>
-                                <option value="854x480">854x480 (SD)</option>
+                                <template x-for="(option, idx) in resolutionOptions" :key="idx">
+                                    <option :value="option" x-text="option"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2"
+                                :class="darkMode ? 'text-gray-200' : 'text-gray-700'">
+                                High Speed Capture
+                            </label>
+                            <select x-model="selectedHighSpeed"
+                                class="w-full px-3 py-2 border rounded-md transition-colors duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'">
+                                <option value="">None</option>
+                                <template x-for="(option, idx) in highSpeedOptions" :key="idx">
+                                    <option :value="option" x-text="option"></option>
+                                </template>
                             </select>
                         </div>
 
@@ -598,13 +514,13 @@
 
                 pairingData: {
                     ip: '',
-                    port: '5555',
+                    port: '',
                     code: ''
                 },
 
                 connectData: {
                     ip: '',
-                    port: '5555'
+                    port: ''
                 },
 
                 streamingData: {
@@ -616,7 +532,8 @@
                 status: {
                     paired: false,
                     connected: false,
-                    streaming: false
+                    streaming: false,
+                    guid: null
                 },
 
                 loading: {
@@ -629,6 +546,43 @@
                     activeStep: 1
                 },
 
+                cameraSizes: {},
+                resolutionOptions: [],
+                cameraOptions: [],
+                highSpeedOptions: [],
+                selectedCamera: null,
+                selectedHighSpeed: null,
+                async fetchCameraSizes() {
+                    try {
+                        const response = await fetch('/camera_sizes');
+                        const result = await response.json();
+                        this.cameraSizes = result.sizes;
+                        this.cameraOptions = Object.keys(this.cameraSizes);
+                        // Default: use first camera's normal sizes for resolution options
+                        const firstCam = this.cameraOptions[0];
+                        if (firstCam) {
+                            this.selectedCamera = firstCam;
+                            this.resolutionOptions = this.cameraSizes[firstCam].normal;
+                            this.highSpeedOptions = this.cameraSizes[firstCam].high_speed;
+                        } else {
+                            this.resolutionOptions = ["1280x720", "1920x1080"];
+                            this.highSpeedOptions = [];
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch camera sizes', e);
+                        this.resolutionOptions = ["1280x720", "1920x1080"];
+                        this.highSpeedOptions = [];
+                    }
+                },
+                onCameraChange() {
+                    if (this.selectedCamera && this.cameraSizes[this.selectedCamera]) {
+                        this.resolutionOptions = this.cameraSizes[this.selectedCamera].normal;
+                        this.highSpeedOptions = this.cameraSizes[this.selectedCamera].high_speed;
+                    } else {
+                        this.resolutionOptions = ["1280x720", "1920x1080"];
+                        this.highSpeedOptions = [];
+                    }
+                },
                 toggleDarkMode() {
                     this.darkMode = !this.darkMode;
                     localStorage.setItem('darkMode', this.darkMode);
@@ -646,34 +600,114 @@
                     return false;
                 },
 
+                async fetchStatus() {
+                    try {
+                        // Check live ADB connection
+                        const adbResp = await fetch('/adb_status');
+                        const adbResult = await adbResp.json();
+                        this.status.connected = adbResult.connected;
+                        this.status.devices = adbResult.devices;
+
+                        // Fetch persistent status for pairing/guid
+                        const response = await fetch('/user_status');
+                        const result = await response.json();
+                        this.status.paired = result.paired;
+                        this.status.guid = result.guid;
+                        // Optionally, auto-fill connection info
+                        if (result.connect_ip) this.connectData.ip = result.connect_ip;
+                        if (result.connect_port) this.connectData.port = result.connect_port;
+
+                        // Set accordion step based on status
+                        if (this.status.paired && !this.status.connected) {
+                            this.accordion.activeStep = 2;
+                        } else if (this.status.paired && this.status.connected) {
+                            this.accordion.activeStep = 3;
+                        } else {
+                            this.accordion.activeStep = 1;
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch user status', e);
+                        this.accordion.activeStep = 1;
+                    }
+                },
+
+                async fetchCameraSizes() {
+                    try {
+                        const response = await fetch('/camera_sizes');
+                        const result = await response.json();
+                        this.cameraSizes = result.sizes;
+                        this.cameraOptions = Object.keys(this.cameraSizes);
+                        // Default: use first camera's normal sizes for resolution options
+                        const firstCam = this.cameraOptions[0];
+                        if (firstCam) {
+                            this.selectedCamera = firstCam;
+                            this.resolutionOptions = this.cameraSizes[firstCam].normal;
+                            this.highSpeedOptions = this.cameraSizes[firstCam].high_speed;
+                        } else {
+                            this.resolutionOptions = ["1280x720", "1920x1080"];
+                            this.highSpeedOptions = [];
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch camera sizes', e);
+                        this.resolutionOptions = ["1280x720", "1920x1080"];
+                        this.highSpeedOptions = [];
+                    }
+                },
+
                 async handlePairing() {
                     this.loading.pairing = true;
-
-                    // Simulate ADB pairing process
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-
-                    this.status.paired = true;
+                    const response = await fetch('/adb_pair', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.pairingData)
+                    });
+                    const result = await response.json();
+                    console.log('Pairing request sent:', this.pairingData);
+                    console.log('Pairing result:', result);
+                    console.log('Pairing successful:', result.success === 'true');
+                    this.status.paired = result.success === 'true';
+                    this.status.guid = result.guid;
                     this.loading.pairing = false;
-
-                    // Auto-populate connect form with pairing data
                     this.connectData.ip = this.pairingData.ip;
-                    this.connectData.port = this.pairingData.port;
-
-                    // Auto-open next step
                     this.accordion.activeStep = 2;
                 },
 
                 async handleConnect() {
                     this.loading.connecting = true;
+                    try {
+                        const response = await fetch('/adb_connect', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(this.connectData)
+                        });
 
-                    // Simulate ADB connection process
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
 
-                    this.status.connected = true;
-                    this.loading.connecting = false;
+                        const result = await response.json();
 
-                    // Auto-open next step
-                    this.accordion.activeStep = 3;
+                        console.log('Connection request sent:', this.connectData);
+                        console.log('Connection result:', result);
+
+                        if (result.success === 'true') {
+                            this.status.connected = true;
+                            this.accordion.activeStep = 3;
+                        } else {
+                            const errorMsg = result.error || 'Unknown error';
+                            console.error('Connection failed:', errorMsg);
+                            alert(`Connection failed: ${errorMsg}`);
+                        }
+                    } catch (error) {
+                        console.error('Connection error:', error);
+                        alert(`Connection failed: ${error.message}`);
+                    } finally {
+                        this.loading.connecting = false;
+                    }
                 },
 
                 async handleStartStreaming() {
@@ -686,9 +720,10 @@
                     this.loading.streaming = false;
                 },
 
-                init() {
-                    // Initialize dark mode based on saved preference
+                async init() {
                     document.documentElement.classList.toggle('dark', this.darkMode);
+                    await this.fetchStatus();
+                    await this.fetchCameraSizes();
                 }
             }
         }
