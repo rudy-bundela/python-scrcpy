@@ -194,6 +194,25 @@ def scrcpy_start():
     camera_size = data.get("scrcpy_start.camera_size", user_prefs.get("camera_size"))
     camera_fps = data.get("scrcpy_start.camera_fps", user_prefs.get("camera_fps"))
 
+    # # Check if selected options are valid by getting current camera sizes
+    # proc = subprocess.Popen(["scrcpy", "--list-camera-sizes"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    # output, error = proc.communicate()
+    # if proc.returncode != 0:
+    #     return {"success": "false", "error": "Failed to validate camera options"}
+
+    # # Check if selected camera_size and fps are available
+    # size_found = False
+    # for line in output.strip().splitlines():
+    #     if line.strip().startswith('- '):
+    #         size = line[2:].strip()
+    #         # Check both normal and high-speed sizes
+    #         if size == camera_size or (size.startswith(camera_size.split()[0]) and 'fps' in size and str(camera_fps) in size):
+    #             size_found = True
+    #             break
+
+    # if not size_found:
+    #     return {"success": "false", "error": f"Selected resolution {camera_size} with {camera_fps}fps is not available"}
+
     # Save preferences
     user_prefs["video_codec"] = video_codec
     user_prefs["video_source"] = video_source
@@ -203,24 +222,51 @@ def scrcpy_start():
     user_prefs["camera_fps"] = camera_fps
     save_user_prefs(user_prefs)
 
+    # Base command
     command = [
         "scrcpy",
         "-ra.mp4",
         f"--video-codec={video_codec}",
         f"--video-source={video_source}",
         f"-b {bitrate}",
-        f"--camera-high-speed",
         f"--camera-id={camera_id}",
-        f"--camera-size={camera_size}",
-        f"--camera-fps={camera_fps}",
         "--no-playback",
         "--no-window",
         "--no-control",
         "--audio-codec=aac"
     ]
 
+    # Parse the resolution string
+    if "(fps=" in camera_size:
+        # This is a high-speed resolution with embedded fps info
+        resolution = camera_size.split()[0]  # Get "1920x1080" from "1920x1080 (fps=[120])"
+        command.append("--camera-high-speed")
+        command.append(f"--camera-size={resolution}")
+        # Extract FPS from the string if possible
+        import re
+        fps_match = re.search(r'fps=\[([^\]]+)\]', camera_size)
+        if fps_match:
+            # Use the first fps value if multiple are present
+            fps = fps_match.group(1).split(',')[0].strip()
+            command.append(f"--camera-fps={fps}")
+        else:
+            command.append(f"--camera-fps={camera_fps}")
+    else:
+        # Normal resolution
+        command.append(f"--camera-size={camera_size}")
+        command.append(f"--camera-fps={camera_fps}")
+
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
+    import time
+    time.sleep(1)  # Give it a moment to start
+
+    if proc.poll() is not None:
+        # Process has quit
+        output, error = proc.communicate()
+        print("Output:", output)
+        print("Error:", error)
+        return {"success": "false", "error": "scrcpy is still running", "output": output, "error": error}
     return {"success": "true"}
 
 @app.route("/scrcpy_stop", methods=["POST"])
@@ -240,47 +286,59 @@ def camera_sizes():
     output, error = proc.communicate()
     print("scrcpy camera sizes output:", output)
     print("scrcpy camera sizes error:", error)
-    sizes = {}
+    grouped = {}
     current_id = None
-    current_info = None
-    normal_sizes = []
-    high_speed_sizes = []
+    current_type = None
+    fps_list = []
+    sizes_by_fps = {}
+    high_speed = False
     for line in output.strip().splitlines():
         line = line.strip()
         if line.startswith('--camera-id='):
             # Save previous camera block
             if current_id is not None:
-                sizes[current_id] = {
-                    'info': current_info,
-                    'normal': normal_sizes,
-                    'high_speed': high_speed_sizes
-                }
+                if current_type not in grouped:
+                    grouped[current_type] = {}
+                grouped[current_type][current_id] = sizes_by_fps
             # Start new camera block
-            current_id = line.split()[0].replace('--camera-id=', '')
-            current_info = line[len('--camera-id='):].strip()
-            normal_sizes = []
-            high_speed_sizes = []
-        elif line.startswith('- '):
-            # Normal size
-            size = line[2:].strip()
-            if '(fps=' in size:
-                # High speed size
-                high_speed_sizes.append(size)
-            else:
-                normal_sizes.append(size)
+            parts = line.split()
+            current_id = parts[0].replace('--camera-id=', '')
+            # Extract type (front/back) and fps
+            type_match = None
+            fps_match = None
+            import re
+            type_match = re.search(r'\((front|back),', line)
+            fps_match = re.search(r'fps=\[([^\]]+)\]', line)
+            current_type = type_match.group(1) if type_match else 'unknown'
+            fps_list = [int(fps.strip()) for fps in fps_match.group(1).split(',')] if fps_match else []
+            sizes_by_fps = {fps: [] for fps in fps_list}
+            high_speed = False
         elif line.startswith('High speed capture'):
-            # Next lines will be high speed sizes
-            continue
+            high_speed = True
+        elif line.startswith('- '):
+            size = line[2:].strip()
+            if high_speed:
+                # Parse high speed size and fps
+                hs_match = re.match(r'(\d+x\d+) \(fps=\[([^\]]+)\]\)', size)
+                if hs_match:
+                    res = hs_match.group(1)
+                    hs_fps = [int(fps.strip()) for fps in hs_match.group(2).split(',')]
+                    for fps in hs_fps:
+                        if fps not in sizes_by_fps:
+                            sizes_by_fps[fps] = []
+                        sizes_by_fps[fps].append(res + ' (high-speed)')
+            else:
+                # Normal size, add to all normal fps
+                for fps in fps_list:
+                    sizes_by_fps[fps].append(size)
     # Save last camera block
     if current_id is not None:
-        sizes[current_id] = {
-            'info': current_info,
-            'normal': normal_sizes,
-            'high_speed': high_speed_sizes
-        }
+        if current_type not in grouped:
+            grouped[current_type] = {}
+        grouped[current_type][current_id] = sizes_by_fps
     return {
         "success": True,
-        "sizes": sizes,
+        "grouped": grouped,
         "output": output,
         "error": error
     }

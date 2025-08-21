@@ -9,10 +9,14 @@ services:
       - "8000:8000"
     volumes:
       - scrcpy_adb_keys:/root/.android
+      - ./static:/static
+      - ./templates:/templates
+      - ./simplewebui.py:/simplewebui.py
     networks:
       - scrcpy_net
     depends_on:
       - mediamtx
+    command: ["python", "/simplewebui.py"]
 
   mediamtx:
     image: bluenviron/mediamtx:latest-ffmpeg

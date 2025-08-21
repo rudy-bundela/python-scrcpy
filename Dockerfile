@@ -46,9 +46,7 @@ RUN apk add --no-cache \
 # Copy only necessary files from builder
 COPY --from=builder /usr/local/bin/scrcpy /usr/local/bin/
 COPY --from=builder /usr/local/share/scrcpy /usr/local/share/scrcpy
-COPY --from=builder /usr/local/bin/mediamtx /usr/local/bin/
-COPY ./templates ./templates
-COPY ./static ./static
+
 COPY simplewebui.py .
 
 EXPOSE 5000

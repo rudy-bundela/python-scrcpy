@@ -3,7 +3,7 @@
 
 <head>
     <title>
-        simple web ui
+        from docker simple web ui 
     </title>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="/static/output.css" rel="stylesheet">
@@ -425,13 +425,39 @@
                         <div>
                             <label class="block text-sm font-medium mb-2"
                                 :class="darkMode ? 'text-gray-200' : 'text-gray-700'">
-                                Camera
+                                Camera Type
                             </label>
-                            <select x-model="selectedCamera" @change="onCameraChange"
+                            <select x-model="cameraType" @change="onCameraTypeChange"
                                 class="w-full px-3 py-2 border rounded-md transition-colors duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'">
-                                <template x-for="(cam, idx) in cameraOptions" :key="idx">
-                                    <option :value="cam" x-text="'Camera ' + cam"></option>
+                                <template x-for="(type, idx) in groupedCameraTypes" :key="idx">
+                                    <option :value="type" x-text="type.charAt(0).toUpperCase() + type.slice(1)"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2"
+                                :class="darkMode ? 'text-gray-200' : 'text-gray-700'">
+                                Camera ID
+                            </label>
+                            <select x-model="selectedCameraId" @change="onCameraIdChange"
+                                class="w-full px-3 py-2 border rounded-md transition-colors duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'">
+                                <template x-for="(camId, idx) in cameraIds" :key="idx">
+                                    <option :value="camId" x-text="'Camera ' + camId"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2"
+                                :class="darkMode ? 'text-gray-200' : 'text-gray-700'">
+                                Frame Rate (FPS)
+                            </label>
+                            <select x-model="selectedFps" @change="onFpsChange"
+                                class="w-full px-3 py-2 border rounded-md transition-colors duration-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'">
+                                <template x-for="(fps, idx) in fpsOptions" :key="idx">
+                                    <option :value="fps" x-text="fps + ' FPS'"></option>
                                 </template>
                             </select>
                         </div>
@@ -449,34 +475,6 @@
                             </select>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium mb-2"
-                                :class="darkMode ? 'text-gray-200' : 'text-gray-700'">
-                                High Speed Capture
-                            </label>
-                            <select x-model="selectedHighSpeed"
-                                class="w-full px-3 py-2 border rounded-md transition-colors duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'">
-                                <option value="">None</option>
-                                <template x-for="(option, idx) in highSpeedOptions" :key="idx">
-                                    <option :value="option" x-text="option"></option>
-                                </template>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium mb-2"
-                                :class="darkMode ? 'text-gray-200' : 'text-gray-700'">
-                                Frame Rate (FPS)
-                            </label>
-                            <select x-model="streamingData.framerate"
-                                class="w-full px-3 py-2 border rounded-md transition-colors duration-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'">
-                                <option value="60">60 FPS</option>
-                                <option value="30">30 FPS</option>
-                                <option value="15">15 FPS</option>
-                            </select>
-                        </div>
 
                         <button type="submit" :disabled="loading.streaming || status.streaming"
                             class="w-full py-2 px-4 rounded-md transition-all duration-300 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -547,41 +545,66 @@
                 },
 
                 cameraSizes: {},
+                groupedCameraTypes: [],
+                cameraType: null,
+                cameraIds: [],
+                selectedCameraId: null,
+                fpsOptions: [],
+                selectedFps: null,
                 resolutionOptions: [],
-                cameraOptions: [],
-                highSpeedOptions: [],
-                selectedCamera: null,
-                selectedHighSpeed: null,
                 async fetchCameraSizes() {
                     try {
                         const response = await fetch('/camera_sizes');
                         const result = await response.json();
-                        this.cameraSizes = result.sizes;
-                        this.cameraOptions = Object.keys(this.cameraSizes);
-                        // Default: use first camera's normal sizes for resolution options
-                        const firstCam = this.cameraOptions[0];
-                        if (firstCam) {
-                            this.selectedCamera = firstCam;
-                            this.resolutionOptions = this.cameraSizes[firstCam].normal;
-                            this.highSpeedOptions = this.cameraSizes[firstCam].high_speed;
-                        } else {
-                            this.resolutionOptions = ["1280x720", "1920x1080"];
-                            this.highSpeedOptions = [];
-                        }
+                        this.cameraSizes = result.grouped;
+                        this.groupedCameraTypes = Object.keys(this.cameraSizes);
+                        // Default: use first type (front/back)
+                        this.cameraType = this.groupedCameraTypes[0] || null;
+                        this.cameraIds = this.cameraType ? Object.keys(this.cameraSizes[this.cameraType]) : [];
+                        this.selectedCameraId = this.cameraIds[0] || null;
+                        this.updateFpsOptions();
                     } catch (e) {
                         console.error('Failed to fetch camera sizes', e);
+                        this.groupedCameraTypes = [];
+                        this.cameraType = null;
+                        this.cameraIds = [];
+                        this.selectedCameraId = null;
+                        this.fpsOptions = [];
+                        this.selectedFps = null;
                         this.resolutionOptions = ["1280x720", "1920x1080"];
                         this.highSpeedOptions = [];
                     }
                 },
-                onCameraChange() {
-                    if (this.selectedCamera && this.cameraSizes[this.selectedCamera]) {
-                        this.resolutionOptions = this.cameraSizes[this.selectedCamera].normal;
-                        this.highSpeedOptions = this.cameraSizes[this.selectedCamera].high_speed;
+                updateFpsOptions() {
+                    if (this.cameraType && this.selectedCameraId && this.cameraSizes[this.cameraType][this.selectedCameraId]) {
+                        this.fpsOptions = Object.keys(this.cameraSizes[this.cameraType][this.selectedCameraId]).map(fps => parseInt(fps));
+                        this.selectedFps = this.fpsOptions[0] || null;
+                        this.updateResolutionOptions();
                     } else {
+                        this.fpsOptions = [];
+                        this.selectedFps = null;
                         this.resolutionOptions = ["1280x720", "1920x1080"];
                         this.highSpeedOptions = [];
                     }
+                },
+                updateResolutionOptions() {
+                    if (this.cameraType && this.selectedCameraId && this.selectedFps && this.cameraSizes[this.cameraType][this.selectedCameraId][this.selectedFps]) {
+                        // All sizes including high-speed options are now just resolution options
+                        this.resolutionOptions = this.cameraSizes[this.cameraType][this.selectedCameraId][this.selectedFps];
+                    } else {
+                        this.resolutionOptions = ["1280x720", "1920x1080"];
+                    }
+                },
+                onCameraTypeChange() {
+                    this.cameraIds = this.cameraType ? Object.keys(this.cameraSizes[this.cameraType]) : [];
+                    this.selectedCameraId = this.cameraIds[0] || null;
+                    this.updateFpsOptions();
+                },
+                onCameraIdChange() {
+                    this.updateFpsOptions();
+                },
+                onFpsChange() {
+                    this.updateResolutionOptions();
                 },
                 toggleDarkMode() {
                     this.darkMode = !this.darkMode;
@@ -635,20 +658,21 @@
                     try {
                         const response = await fetch('/camera_sizes');
                         const result = await response.json();
-                        this.cameraSizes = result.sizes;
-                        this.cameraOptions = Object.keys(this.cameraSizes);
-                        // Default: use first camera's normal sizes for resolution options
-                        const firstCam = this.cameraOptions[0];
-                        if (firstCam) {
-                            this.selectedCamera = firstCam;
-                            this.resolutionOptions = this.cameraSizes[firstCam].normal;
-                            this.highSpeedOptions = this.cameraSizes[firstCam].high_speed;
-                        } else {
-                            this.resolutionOptions = ["1280x720", "1920x1080"];
-                            this.highSpeedOptions = [];
-                        }
+                        this.cameraSizes = result.grouped;
+                        this.groupedCameraTypes = Object.keys(this.cameraSizes);
+                        // Default: use first type (front/back)
+                        this.cameraType = this.groupedCameraTypes[0] || null;
+                        this.cameraIds = this.cameraType ? Object.keys(this.cameraSizes[this.cameraType]) : [];
+                        this.selectedCameraId = this.cameraIds[0] || null;
+                        this.updateFpsOptions();
                     } catch (e) {
                         console.error('Failed to fetch camera sizes', e);
+                        this.groupedCameraTypes = [];
+                        this.cameraType = null;
+                        this.cameraIds = [];
+                        this.selectedCameraId = null;
+                        this.fpsOptions = [];
+                        this.selectedFps = null;
                         this.resolutionOptions = ["1280x720", "1920x1080"];
                         this.highSpeedOptions = [];
                     }
@@ -712,12 +736,42 @@
 
                 async handleStartStreaming() {
                     this.loading.streaming = true;
+                    try {
+                        const streamOptions = {
+                            'scrcpy_start.camera_id': this.selectedCameraId,
+                            'scrcpy_start.video_codec': 'h264',
+                            'scrcpy_start.video_source': 'camera',
+                            'scrcpy_start.bitrate': '5000000',
+                            'scrcpy_start.camera_size': this.streamingData.resolution,
+                            'scrcpy_start.camera_fps': this.selectedFps?.toString() || '30'
+                        };
 
-                    // Simulate streaming start process
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                        const response = await fetch('/scrcpy_start', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(streamOptions)
+                        });
 
-                    this.status.streaming = true;
-                    this.loading.streaming = false;
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const result = await response.json();
+                        if (result.success === 'true') {
+                            this.status.streaming = true;
+                        } else {
+                            const errorMsg = result.error || 'Unknown error';
+                            console.error('Streaming failed:', errorMsg);
+                            alert(`Streaming failed: ${errorMsg}`);
+                        }
+                    } catch (error) {
+                        console.error('Streaming error:', error);
+                        alert(`Streaming failed: ${error.message}`);
+                    } finally {
+                        this.loading.streaming = false;
+                    }
                 },
 
                 async init() {
