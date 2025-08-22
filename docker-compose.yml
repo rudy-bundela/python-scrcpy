@@ -20,7 +20,9 @@ services:
     command: ["flask", "--app", "/simplewebui.py", "run", "--debug", "--host=0.0.0.0"]
 
   mediamtx:
-    image: bluenviron/mediamtx:latest-ffmpeg
+    build:
+      context: .
+      dockerfile: mediamtx.Dockerfile
     ports:
       - "8554:8554"  # RTSP
       - "8888:8888"  # API
@@ -28,10 +30,11 @@ services:
       - "8189:8189/udp"
       - "8890:8890/udp"  # WebRTC
     volumes:
-      - ./mediamtx.yml:/mediamtx.yml
+      - ./mediamtx_conf:/mediamtx_conf
     networks:
       - scrcpy_net
     restart: unless-stopped
+    command: ["/mediamtx_conf/mediamtx.yml"]
 
 networks:
   scrcpy_net:

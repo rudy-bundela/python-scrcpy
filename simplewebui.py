@@ -4,6 +4,7 @@ import json
 import os
 
 USER_PREFS_FILE = "user_prefs.json"
+MEDIAMTX_STREAM = False  # Set to True if you want to use MediaMTX for streaming
 
 def load_user_prefs():
     defaults = {
