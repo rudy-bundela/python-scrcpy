@@ -654,30 +654,6 @@
                     }
                 },
 
-                async fetchCameraSizes() {
-                    try {
-                        const response = await fetch('/camera_sizes');
-                        const result = await response.json();
-                        this.cameraSizes = result.grouped;
-                        this.groupedCameraTypes = Object.keys(this.cameraSizes);
-                        // Default: use first type (front/back)
-                        this.cameraType = this.groupedCameraTypes[0] || null;
-                        this.cameraIds = this.cameraType ? Object.keys(this.cameraSizes[this.cameraType]) : [];
-                        this.selectedCameraId = this.cameraIds[0] || null;
-                        this.updateFpsOptions();
-                    } catch (e) {
-                        console.error('Failed to fetch camera sizes', e);
-                        this.groupedCameraTypes = [];
-                        this.cameraType = null;
-                        this.cameraIds = [];
-                        this.selectedCameraId = null;
-                        this.fpsOptions = [];
-                        this.selectedFps = null;
-                        this.resolutionOptions = ["1280x720", "1920x1080"];
-                        this.highSpeedOptions = [];
-                    }
-                },
-
                 async handlePairing() {
                     this.loading.pairing = true;
                     const response = await fetch('/adb_pair', {
@@ -721,6 +697,7 @@
                         if (result.success === 'true') {
                             this.status.connected = true;
                             this.accordion.activeStep = 3;
+                            this.fetchCameraSizes();
                         } else {
                             const errorMsg = result.error || 'Unknown error';
                             console.error('Connection failed:', errorMsg);
@@ -777,7 +754,9 @@
                 async init() {
                     document.documentElement.classList.toggle('dark', this.darkMode);
                     await this.fetchStatus();
-                    await this.fetchCameraSizes();
+                    if (this.status.connected) {
+                        await this.fetchCameraSizes();
+                    }
                 }
             }
         }
