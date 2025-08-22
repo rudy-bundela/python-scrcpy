@@ -11,12 +11,13 @@ services:
       - scrcpy_adb_keys:/root/.android
       - ./static:/static
       - ./templates:/templates
+      - ./user_prefs.json:/user_prefs.json
       - ./simplewebui.py:/simplewebui.py
     networks:
       - scrcpy_net
     depends_on:
       - mediamtx
-    command: ["python", "/simplewebui.py"]
+    command: ["flask", "--app", "/simplewebui.py", "run", "--debug", "--host=0.0.0.0"]
 
   mediamtx:
     image: bluenviron/mediamtx:latest-ffmpeg
@@ -26,7 +27,6 @@ services:
       - "8889:8889"  # Metrics
       - "8189:8189/udp"
       - "8890:8890/udp"  # WebRTC
-      - "19302:19302" # Stun Webrtc
     volumes:
       - ./mediamtx.yml:/mediamtx.yml
     networks:

@@ -104,7 +104,24 @@
                         </div>
                     </div>
 
-
+                        <!-- Instructions -->
+                        <div class="mt-8 mb-8 rounded-lg p-6 transition-colors duration-300"
+                            :class="darkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50'">
+                            <h3 class="text-lg font-semibold mb-3"
+                                :class="darkMode ? 'text-blue-300' : 'text-blue-900'">Setup Instructions</h3>
+                            <div class="space-y-2 text-sm" :class="darkMode ?'text-blue-200' : 'text-blue-800'">
+                                <p>1. <strong>Enable Developer Options:</strong> Go to Settings → About phone → Tap
+                                    "Build number" 7 times</p>
+                                <p>2. <strong>Enable USB Debugging:</strong> Go to Settings → Developer options → Enable
+                                    "USB debugging"</p>
+                                <p>3. <strong>Enable Wireless Debugging:</strong> In Developer options → Enable
+                                    "Wireless debugging"</p>
+                                <p>4. <strong>Get Pairing Info:</strong> Tap "Wireless debugging" → "Pair device with
+                                    pairing code"</p>
+                                <p>5. <strong>Use Connection Port:</strong> The main wireless debugging screen shows
+                                    IP:Port for connection</p>
+                            </div>
+                        </div>
 
                     <!-- Accordion Menu -->
                     <div class="space-y-4">
@@ -324,24 +341,6 @@
                                 </form>
                             </div>
                         </div>
-                        <!-- Instructions -->
-                        <div class="mt-8 rounded-lg p-6 transition-colors duration-300"
-                            :class="darkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50'">
-                            <h3 class="text-lg font-semibold mb-3"
-                                :class="darkMode ? 'text-blue-300' : 'text-blue-900'">Setup Instructions</h3>
-                            <div class="space-y-2 text-sm" :class="darkMode ?'text-blue-200' : 'text-blue-800'">
-                                <p>1. <strong>Enable Developer Options:</strong> Go to Settings → About phone → Tap
-                                    "Build number" 7 times</p>
-                                <p>2. <strong>Enable USB Debugging:</strong> Go to Settings → Developer options → Enable
-                                    "USB debugging"</p>
-                                <p>3. <strong>Enable Wireless Debugging:</strong> In Developer options → Enable
-                                    "Wireless debugging"</p>
-                                <p>4. <strong>Get Pairing Info:</strong> Tap "Wireless debugging" → "Pair device with
-                                    pairing code"</p>
-                                <p>5. <strong>Use Connection Port:</strong> The main wireless debugging screen shows
-                                    IP:Port for connection</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -408,20 +407,6 @@
                     x-transition:leave-start="opacity-100 transform translate-y-0"
                     x-transition:leave-end="opacity-0 transform -translate-y-2" class="px-6 pb-6">
                     <form @submit.prevent="handleStartStreaming()" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-2"
-                                :class="darkMode ? 'text-gray-200' : 'text-gray-700'">
-                                Stream Quality
-                            </label>
-                            <select x-model="streamingData.quality"
-                                class="w-full px-3 py-2 border rounded-md transition-colors duration-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'">
-                                <option value="low">Low (Fast)</option>
-                                <option value="medium">Medium (Balanced)</option>
-                                <option value="high">High (Quality)</option>
-                            </select>
-                        </div>
-
                         <div>
                             <label class="block text-sm font-medium mb-2"
                                 :class="darkMode ? 'text-gray-200' : 'text-gray-700'">
@@ -522,9 +507,7 @@
                 },
 
                 streamingData: {
-                    quality: 'medium',
-                    resolution: '1280x720',
-                    framerate: '30'
+                    resolution: '1280x720'
                 },
 
                 status: {
@@ -571,7 +554,7 @@
                         this.selectedCameraId = null;
                         this.fpsOptions = [];
                         this.selectedFps = null;
-                        this.resolutionOptions = ["1280x720", "1920x1080"];
+                        this.resolutionOptions = [];
                         this.highSpeedOptions = [];
                     }
                 },
@@ -722,6 +705,10 @@
                             'scrcpy_start.camera_size': this.streamingData.resolution,
                             'scrcpy_start.camera_fps': this.selectedFps?.toString() || '30'
                         };
+
+                        console.log('Starting streaming with options:', streamOptions);
+                        console.log('Camera size:', this.streamingData.resolution);
+                        console.log('Camera FPS:', this.selectedFps?.toString() || '30');
 
                         const response = await fetch('/scrcpy_start', {
                             method: 'POST',

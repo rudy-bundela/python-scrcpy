@@ -194,24 +194,8 @@ def scrcpy_start():
     camera_size = data.get("scrcpy_start.camera_size", user_prefs.get("camera_size"))
     camera_fps = data.get("scrcpy_start.camera_fps", user_prefs.get("camera_fps"))
 
-    # # Check if selected options are valid by getting current camera sizes
-    # proc = subprocess.Popen(["scrcpy", "--list-camera-sizes"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    # output, error = proc.communicate()
-    # if proc.returncode != 0:
-    #     return {"success": "false", "error": "Failed to validate camera options"}
-
-    # # Check if selected camera_size and fps are available
-    # size_found = False
-    # for line in output.strip().splitlines():
-    #     if line.strip().startswith('- '):
-    #         size = line[2:].strip()
-    #         # Check both normal and high-speed sizes
-    #         if size == camera_size or (size.startswith(camera_size.split()[0]) and 'fps' in size and str(camera_fps) in size):
-    #             size_found = True
-    #             break
-
-    # if not size_found:
-    #     return {"success": "false", "error": f"Selected resolution {camera_size} with {camera_fps}fps is not available"}
+    print("camera size: ", camera_size)
+    print("camera fps: ", camera_fps)
 
     # Save preferences
     user_prefs["video_codec"] = video_codec
@@ -237,20 +221,21 @@ def scrcpy_start():
     ]
 
     # Parse the resolution string
-    if "(fps=" in camera_size:
+    if "(high speed)" in camera_size:
         # This is a high-speed resolution with embedded fps info
         resolution = camera_size.split()[0]  # Get "1920x1080" from "1920x1080 (fps=[120])"
         command.append("--camera-high-speed")
         command.append(f"--camera-size={resolution}")
+        command.append(f"--camera-fps={camera_fps}")  # Default to 120 for high-speed
         # Extract FPS from the string if possible
-        import re
-        fps_match = re.search(r'fps=\[([^\]]+)\]', camera_size)
-        if fps_match:
-            # Use the first fps value if multiple are present
-            fps = fps_match.group(1).split(',')[0].strip()
-            command.append(f"--camera-fps={fps}")
-        else:
-            command.append(f"--camera-fps={camera_fps}")
+        # import re
+        # fps_match = re.search(r'fps=\[([^\]]+)\]', camera_size)
+        # if fps_match:
+        #     # Use the first fps value if multiple are present
+        #     fps = fps_match.group(1).split(',')[0].strip()
+        #     command.append(f"--camera-fps={fps}")
+        # else:
+        #     command.append(f"--camera-fps={camera_fps}")
     else:
         # Normal resolution
         command.append(f"--camera-size={camera_size}")
@@ -267,7 +252,7 @@ def scrcpy_start():
         print("Output:", output)
         print("Error:", error)
         return {"success": "false", "error": "scrcpy is still running", "output": output, "error": error}
-    return {"success": "true"}
+    return {"success": "true", "output": command}
 
 @app.route("/scrcpy_stop", methods=["POST"])
 def scrcpy_stop():
@@ -277,8 +262,8 @@ def scrcpy_stop():
     print("Error:", error)
     if proc.returncode != 0:
         print("Process failed")
-        return {"success": "false"}
-    return {"success": "true"}
+        return {"success": "false", "output": output, "error": error}
+    return {"success": "true", "output": output, "error": error}
 
 @app.route("/camera_sizes", methods=["GET"])
 def camera_sizes():
@@ -326,7 +311,7 @@ def camera_sizes():
                     for fps in hs_fps:
                         if fps not in sizes_by_fps:
                             sizes_by_fps[fps] = []
-                        sizes_by_fps[fps].append(res + ' (high-speed)')
+                        sizes_by_fps[fps].append(res + " (high speed)")
             else:
                 # Normal size, add to all normal fps
                 for fps in fps_list:
