@@ -328,5 +328,15 @@ def camera_sizes():
         "error": error
     }
 
+@app.route("/server_up")
+def server_up():
+    print("Server is up and running")
+    return {"success": True}
+
+@app.route("/server_down")
+def server_down():
+    print("Server is down")
+    return {"success": True}
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
