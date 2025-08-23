@@ -17,7 +17,7 @@ services:
       - scrcpy_net
     depends_on:
       - mediamtx
-    command: ["flask", "--app", "/simplewebui.py", "run", "--debug", "--host=0.0.0.0"]
+    command: ["gunicorn", "--config", "/templates/gunicorn_config.py", "simplewebui:app"]
 
   mediamtx:
     build:
