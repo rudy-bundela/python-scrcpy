@@ -332,12 +332,28 @@ def camera_sizes():
 @app.route("/server_up")
 def server_up():
     print("Server is up and running")
+    global MEDIAMTX_STREAM
+    MEDIAMTX_STREAM = True
     return {"success": True}
 
 @app.route("/server_down")
 def server_down():
     print("Server is down")
+    global MEDIAMTX_STREAM
+    MEDIAMTX_STREAM = False
     return {"success": True}
 
+@app.route("/longpoll")
+def longpoll():
+    global MEDIAMTX_STREAM
+    import time
+    start_time = time.time()
+    while True:
+        if MEDIAMTX_STREAM:
+            return {"success": True}
+        if time.time() - start_time > 30:
+            return {"success": False, "error": "Timeout"}
+        time.sleep(1)
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)

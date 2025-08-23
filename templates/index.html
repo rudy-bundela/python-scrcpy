@@ -3,7 +3,7 @@
 
 <head>
     <title>
-        from docker simple web ui 
+        simple web ui 
     </title>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="/static/output.css" rel="stylesheet">
@@ -741,8 +741,31 @@
                 async init() {
                     document.documentElement.classList.toggle('dark', this.darkMode);
                     await this.fetchStatus();
+                    await this.longpoll();
                     if (this.status.connected) {
                         await this.fetchCameraSizes();
+                    }
+                },
+
+                async longpoll() {
+                    try {
+                        const response = await fetch('/longpoll', {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const result = await response.json();
+                        console.log('Longpoll result:', result);
+                    } catch (error) {
+                        console.error('Longpoll error:', error);
+                    } finally {
+                        setTimeout(() => this.longpoll(), 1000); // Retry after 1 second
                     }
                 }
             }
