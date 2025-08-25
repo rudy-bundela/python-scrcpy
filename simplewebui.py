@@ -1,7 +1,10 @@
-import flask
+from venv import logger
+import quart
 import subprocess
 import json
 import os
+import asyncio
+import time
 
 USER_PREFS_FILE = "user_prefs.json"
 MEDIAMTX_STREAM = False  # Set to True if you want to use MediaMTX for streaming
@@ -36,7 +39,7 @@ def save_user_prefs(prefs):
         json.dump(prefs, f)
 
 user_prefs = load_user_prefs()
-app = flask.Flask(__name__)
+app = quart.Quart(__name__)
 
 @app.route("/adb_status", methods=["GET"])
 def adb_status():
@@ -75,12 +78,12 @@ def user_status():
     }
 
 @app.route("/")
-def home():
-    return flask.render_template("index.html", user_prefs=user_prefs)
+async def home():
+    return await quart.render_template("index.html", user_prefs=user_prefs)
 
 @app.route("/adb_pair", methods=["POST"])
-def adb_pair():
-    data = flask.request.get_json()
+async def adb_pair():
+    data = await quart.request.get_json()
     pairing_ip = data.get("ip", "")
     pairing_port = data.get("port", "")
     pairing_code = data.get("code", "")
@@ -128,8 +131,8 @@ def adb_pair():
         return {"success": "true", "guid": None, "already_paired": False}
 
 @app.route("/adb_connect", methods=["POST"])
-def adb_connect():
-    data = flask.request.get_json()
+async def adb_connect():
+    data = await quart.request.get_json()
     connection_ip = data.get("ip")
     connection_port = data.get("port")
     print(f"Received ADB Connection IP: {connection_ip}, Port: {connection_port}")
@@ -186,8 +189,8 @@ def adb_connect():
     }
 
 @app.route("/scrcpy_start", methods=["POST"])
-def scrcpy_start():
-    data = flask.request.get_json()
+async def scrcpy_start():
+    data = await quart.request.get_json()
     video_codec = data.get("scrcpy_start.video_codec", user_prefs.get("video_codec"))
     video_source = data.get("scrcpy_start.video_source", user_prefs.get("video_source"))
     camera_id = data.get("scrcpy_start.camera_id", user_prefs.get("camera_id"))
@@ -256,7 +259,7 @@ def scrcpy_start():
     return {"success": "true", "output": command}
 
 @app.route("/scrcpy_stop", methods=["POST"])
-def scrcpy_stop():
+async def scrcpy_stop():
     proc = subprocess.Popen(["pkill", "-f", "scrcpy"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     output, error = proc.communicate()
     print("Output:", output)
@@ -267,7 +270,7 @@ def scrcpy_stop():
     return {"success": "true", "output": output, "error": error}
 
 @app.route("/camera_sizes", methods=["GET"])
-def camera_sizes():
+async def camera_sizes():
     proc = subprocess.Popen(["scrcpy", "--list-camera-sizes"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     output, error = proc.communicate()
     print("scrcpy camera sizes output:", output)
@@ -330,14 +333,79 @@ def camera_sizes():
     }
 
 @app.route("/server_up")
-def server_up():
+async def server_up(queue):
+    time_now = time.time()
+    await queue.put("The time now is " + str(time_now))
     print("Server is up and running")
-    return {"success": True}
+    return {"success": True, "time": time_now}
 
 @app.route("/server_down")
-def server_down():
+async def server_down():
     print("Server is down")
     return {"success": True}
+
+# @app.route('/sse')
+# async def sse():
+#     # Create a queue for communication
+#     queue = asyncio.Queue()
+    
+#     # Start the background task
+#     task = asyncio.create_task(time_consuming_task(queue))
+    
+#     async def event_stream():
+#         try:
+#             while True:
+#                 try:
+#                     # Wait for events with timeout to prevent hanging
+#                     result = await asyncio.wait_for(queue.get(), timeout=1.0)
+                    
+#                     if result == "DONE":
+#                         yield f"data: {json.dumps({'status': 'complete'})}\n\n"
+#                         yield "event: close\ndata: \n\n"
+#                         break
+#                     else:
+#                         yield f"data: {json.dumps({'status': 'progress', 'message': result})}\n\n"
+                        
+#                 except asyncio.TimeoutError:
+#                     # Send heartbeat every 3 seconds to keep connection alive
+#                     yield "event: heartbeat\ndata: \n\n"
+#                     continue
+                    
+#         except Exception as e:
+#             logger.error(f"SSE error: {e}")
+#             yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+#         finally:
+#             # Clean up the task
+#             task.cancel()
+#             try:
+#                 await task
+#             except asyncio.CancelledError:
+#                 pass
+
+#     response = quart.Response(
+#         event_stream(),
+#         content_type='text/event-stream',
+#         headers={
+#             'Cache-Control': 'no-cache',
+#             'Connection': 'keep-alive',
+#             'X-Accel-Buffering': 'no'
+#         }
+#     )
+#     return response
+
+# # Update the time_consuming_task to send proper messages
+# async def time_consuming_task(queue):
+#     """Simulate a time-consuming task that sends progress updates"""
+#     try:
+#         for i in range(10):
+#             await asyncio.sleep(0.5)  # Simulate work
+#             await queue.put(f"Step {i+1}/10 completed")
+        
+#         await queue.put("DONE")
+#     except Exception as e:
+#         logger.error(f"Task error: {e}")
+#         await queue.put(f"ERROR: {str(e)}")
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

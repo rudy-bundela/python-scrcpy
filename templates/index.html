@@ -3,7 +3,7 @@
 
 <head>
     <title>
-        from docker simple web ui 
+        from docker simple web ui
     </title>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="/static/output.css" rel="stylesheet">
@@ -45,7 +45,8 @@
                             <h1 class="text-3xl font-bold" :class="darkMode ? 'text-white' : 'text-gray-900'">
                                 Camera2Browser</h1>
                         </div>
-                        <p class="max-w-2xl mx-auto" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Use your Android phone as a camera!</p>
+                        <p class="max-w-2xl mx-auto" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">Use your
+                            Android phone as a camera!</p>
                     </div>
 
                     <!-- Connection Status Bar -->
@@ -104,24 +105,24 @@
                         </div>
                     </div>
 
-                        <!-- Instructions -->
-                        <div class="mt-8 mb-8 rounded-lg p-6 transition-colors duration-300"
-                            :class="darkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50'">
-                            <h3 class="text-lg font-semibold mb-3"
-                                :class="darkMode ? 'text-blue-300' : 'text-blue-900'">Setup Instructions</h3>
-                            <div class="space-y-2 text-sm" :class="darkMode ?'text-blue-200' : 'text-blue-800'">
-                                <p>1. <strong>Enable Developer Options:</strong> Go to Settings → About phone → Tap
-                                    "Build number" 7 times</p>
-                                <p>2. <strong>Enable USB Debugging:</strong> Go to Settings → Developer options → Enable
-                                    "USB debugging"</p>
-                                <p>3. <strong>Enable Wireless Debugging:</strong> In Developer options → Enable
-                                    "Wireless debugging"</p>
-                                <p>4. <strong>Get Pairing Info:</strong> Tap "Wireless debugging" → "Pair device with
-                                    pairing code"</p>
-                                <p>5. <strong>Use Connection Port:</strong> The main wireless debugging screen shows
-                                    IP:Port for connection</p>
-                            </div>
+                    <!-- Instructions -->
+                    <div class="mt-8 mb-8 rounded-lg p-6 transition-colors duration-300"
+                        :class="darkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50'">
+                        <h3 class="text-lg font-semibold mb-3" :class="darkMode ? 'text-blue-300' : 'text-blue-900'">
+                            Setup Instructions</h3>
+                        <div class="space-y-2 text-sm" :class="darkMode ?'text-blue-200' : 'text-blue-800'">
+                            <p>1. <strong>Enable Developer Options:</strong> Go to Settings → About phone → Tap
+                                "Build number" 7 times</p>
+                            <p>2. <strong>Enable USB Debugging:</strong> Go to Settings → Developer options → Enable
+                                "USB debugging"</p>
+                            <p>3. <strong>Enable Wireless Debugging:</strong> In Developer options → Enable
+                                "Wireless debugging"</p>
+                            <p>4. <strong>Get Pairing Info:</strong> Tap "Wireless debugging" → "Pair device with
+                                pairing code"</p>
+                            <p>5. <strong>Use Connection Port:</strong> The main wireless debugging screen shows
+                                IP:Port for connection</p>
                         </div>
+                    </div>
 
                     <!-- Accordion Menu -->
                     <div class="space-y-4">
@@ -416,7 +417,8 @@
                                 class="w-full px-3 py-2 border rounded-md transition-colors duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 :class="darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'">
                                 <template x-for="(type, idx) in groupedCameraTypes" :key="idx">
-                                    <option :value="type" x-text="type.charAt(0).toUpperCase() + type.slice(1)"></option>
+                                    <option :value="type" x-text="type.charAt(0).toUpperCase() + type.slice(1)">
+                                    </option>
                                 </template>
                             </select>
                         </div>
@@ -460,6 +462,17 @@
                             </select>
                         </div>
 
+                        <div class="fixed top-4 left-4 z-50">
+                            <span class="px-2 py-1 rounded text-sm" :class="{
+              'bg-green-500': serverStatus === 'up',
+              'bg-red-500': serverStatus === 'down',
+              'bg-yellow-500': serverStatus === 'error',
+              'bg-gray-500': serverStatus === 'unknown'
+          }">
+                                Server Status: <span x-text="serverStatus"></span>
+                            </span>
+                        </div>
+
 
                         <button type="submit" :disabled="loading.streaming || status.streaming"
                             class="w-full py-2 px-4 rounded-md transition-all duration-300 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -494,6 +507,10 @@
         function adbConnection() {
             return {
                 darkMode: localStorage.getItem('darkMode') === 'true' || false,
+
+                serverStatus: 'unknown',
+                lastEventTime: null,
+                eventSource: null,
 
                 pairingData: {
                     ip: '',
@@ -741,10 +758,79 @@
                 async init() {
                     document.documentElement.classList.toggle('dark', this.darkMode);
                     await this.fetchStatus();
+                    // await this.initSSE();
                     if (this.status.connected) {
                         await this.fetchCameraSizes();
                     }
-                }
+                },
+
+                // initSSE() {
+                //     console.log('Initializing SSE connection...');
+
+                //     // Close existing connection if any
+                //     if (this.eventSource) {
+                //         this.eventSource.close();
+                //         this.eventSource = null;
+                //     }
+
+                //     // Create new EventSource
+                //     this.eventSource = new EventSource('/sse');
+
+                //     // Handle successful connection
+                //     this.eventSource.onopen = (e) => {
+                //         console.log('SSE connection opened');
+                //         this.serverStatus = 'connected';
+                //     };
+
+                //     // Handle incoming messages
+                //     this.eventSource.onmessage = (e) => {
+                //         try {
+                //             if (e.data && e.data !== ':keep-alive') {
+                //                 const data = JSON.parse(e.data);
+                //                 console.log('SSE event received:', data);
+                //                 this.lastEventTime = Date.now();
+
+                //                 // Handle different event types
+                //                 switch (data.event) {
+                //                     case 'server_up':
+                //                         this.serverStatus = 'up';
+                //                         break;
+                //                     case 'server_down':
+                //                         this.serverStatus = 'down';
+                //                         break;
+                //                     default:
+                //                         console.log('Unknown event type:', data.event);
+                //                 }
+                //             }
+                //         } catch (err) {
+                //             console.error('Error processing SSE message:', err);
+                //         }
+                //     };
+
+                //     // Handle errors and reconnection
+                //     this.eventSource.onerror = (e) => {
+                //         console.error('SSE connection error:', e);
+                //         this.serverStatus = 'error';
+
+                //         // Close existing connection
+                //         this.eventSource.close();
+                //         this.eventSource = null;
+
+                //         // Attempt to reconnect after 5 seconds
+                //         setTimeout(() => {
+                //             console.log('Attempting to reconnect...');
+                //             this.initSSE();
+                //         }, 5000);
+                //     };
+                // },
+
+                // checkConnection() {
+                //     // Check if we haven't received events for more than 60 seconds
+                //     if (this.lastEventTime && Date.now() - this.lastEventTime > 60000) {
+                //         console.log('No events received recently, reconnecting...');
+                //         this.initSSE();
+                //     }
+                // },
             }
         }
     </script>

@@ -17,7 +17,7 @@ services:
       - scrcpy_net
     depends_on:
       - mediamtx
-    command: ["gunicorn", "--config", "/templates/gunicorn_config.py", "simplewebui:app"]
+    command: ["hypercorn", "--config", "/templates/gunicorn_config.py", "simplewebui:app"]
 
   mediamtx:
     build:

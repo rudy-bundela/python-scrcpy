@@ -34,7 +34,7 @@ FROM python:3-alpine
 # Set up web application
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install gunicorn
+    pip install hypercorn
 
 # Install only runtime dependencies
 RUN apk add --no-cache \
@@ -46,8 +46,3 @@ RUN apk add --no-cache \
 # Copy only necessary files from builder
 COPY --from=builder /usr/local/bin/scrcpy /usr/local/bin/
 COPY --from=builder /usr/local/share/scrcpy /usr/local/share/scrcpy
-
-COPY simplewebui.py .
-
-EXPOSE 5000
-CMD ["python", "simplewebui.py"]
