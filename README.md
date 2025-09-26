@@ -1,19 +1,19 @@
 # Phone as a Webcam using Python-Scrcpy
 
-This project converts an Android phone into a webcam, streaming its screen to your web browser using `scrcpy` and Docker.
+This project converts an Android phone into a webcam, streaming its camera to your web browser using `scrcpy`, `Mediamtx` and Docker.
 
 ***
 
 ## ⚠️ Project Status
 
-This is a **proof of concept** and is currently a work in progress. It does not have proper error handling and many features are not yet implemented. It is intended for demonstration and development purposes.
+This is an early **proof of concept** and is currently a work in progress. It does not have proper error handling and many features are not yet implemented. It is intended for demonstration and development purposes.
 
 ***
 
 ## Features
 
 * Turns an Android phone into a camera source.
-* Streams video to the browser using two different protocols.
+* Streams video to the browser
     * **WebRTC**: Low-latency stream available at `http://localhost:8888`.
     * **HLS**: HTTP Live Streaming available at `http://localhost:8889`.
 
