@@ -11,7 +11,7 @@ services:
       - scrcpy_adb_keys:/root/.android
       - ./static:/static
       - ./templates:/templates
-      - ./user_prefs.json:/user_prefs.json
+      # - ./user_prefs.json:/user_prefs.json
       - ./simplewebui.py:/simplewebui.py
     networks:
       - scrcpy_net
